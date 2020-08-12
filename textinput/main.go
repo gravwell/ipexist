@@ -20,8 +20,9 @@ import (
 )
 
 var (
-	fIn  = flag.String("i", "", "Input file")
+	fIn  = flag.String("i", "", "Input file.  Use  \"-\" for stdin")
 	fOut = flag.String("o", "output.ipe", "Output file")
+	dbg  = flag.Bool("d", false, "Enable debug output, printing any failed lines")
 )
 
 func init() {
@@ -38,11 +39,17 @@ func init() {
 }
 
 func main() {
-	fin, err := os.Open(*fIn)
-	if err != nil {
-		log.Fatalf("Failed to open %s: %v\n", *fIn, err)
+	var rdr io.ReadCloser
+	if *fIn == `-` {
+		rdr = os.Stdin
+	} else {
+		if fin, err := os.Open(*fIn); err != nil {
+			log.Fatalf("Failed to open %s: %v\n", *fIn, err)
+		} else {
+			defer fin.Close()
+			rdr = fin
+		}
 	}
-	defer fin.Close()
 	fout, err := os.Create(*fOut)
 	if err != nil {
 		log.Fatalf("Failed to create %s: %v\n", *fOut, err)
@@ -51,7 +58,7 @@ func main() {
 
 	ipb := ipexist.NewIPBitMap()
 
-	r := bufio.NewReader(fin)
+	r := bufio.NewReader(rdr)
 	var cnt int
 	for {
 		s, err := r.ReadString('\n')
@@ -68,7 +75,11 @@ func main() {
 					log.Fatalf("Failed to add %s: %v\n", ip, err)
 				}
 				cnt++
+				continue
 			}
+		}
+		if *dbg {
+			log.Println("Failed to handle", s)
 		}
 	}
 	if err = ipb.Encode(fout); err != nil {
