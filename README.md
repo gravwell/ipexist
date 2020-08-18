@@ -1,3 +1,7 @@
+# ARCHIVED
+
+This repo is archived, visit the [mono repo](https://github.com/gravwell/gravwell) for current code.
+
 # ipexist
 A library for efficiently storing and checking for the existence of an IPv4 set with high density sets.
 
